@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Spendly{% endblock %}
+
+{% block content %}
+<section class="privacy-section" style="max-width: 800px; margin: 3rem auto; padding: 0 1.5rem 4rem;">
+    <div style="margin-bottom: 2.5rem;">
+        <h1 style="font-family: var(--font-display); font-size: 2.5rem; color: var(--ink); margin-bottom: 0.5rem;">Privacy Policy</h1>
+        <p style="color: var(--ink-muted); font-size: 0.95rem;">Last updated: October 2026</p>
+    </div>
+
+    <div class="privacy-content" style="background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2.5rem; display: flex; flex-direction: column; gap: 2rem; line-height: 1.7; color: var(--ink-soft);">
+        <section>
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); margin-bottom: 0.75rem;">1. Data We Collect</h2>
+            <p>To provide and improve our expense tracking services, Spendly collects the information you provide when registering and using the application. This includes your name, email address, password hash, and the financial records you create (such as expense amounts, categories, transaction dates, and descriptions).</p>
+        </section>
+
+        <section>
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); margin-bottom: 0.75rem;">2. How We Use Your Data</h2>
+            <p>Your data is used solely to deliver the core functionalities of Spendly: calculating your spending statistics, organizing your transactions by category, generating monthly summaries, and securing your user account. We never use your financial data for advertising profiling or marketing purposes.</p>
+        </section>
+
+        <section>
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); margin-bottom: 0.75rem;">3. Data Storage</h2>
+            <p>Your account information and expense transactions are stored securely in our database. Passwords are cryptographically hashed using industry-standard hashing algorithms before storage. We implement appropriate technical measures to safeguard your personal records against unauthorized access, alteration, or disclosure.</p>
+        </section>
+
+        <section>
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); margin-bottom: 0.75rem;">4. Third Party Services</h2>
+            <p>Spendly does not sell, rent, or share your personal or financial data with third-party advertisers or data brokers. Third-party integrations are limited to essential infrastructure providers (such as web hosting and fonts) necessary for the operation of the web application.</p>
+        </section>
+
+        <section>
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); margin-bottom: 0.75rem;">5. Contact Us</h2>
+            <p>If you have questions, concerns, or requests regarding this Privacy Policy or how your personal information is handled, please reach out to us at <a href="mailto:support@spendly.local" style="color: var(--accent); text-decoration: underline;">support@spendly.local</a>.</p>
+        </section>
+    </div>
+</section>
+{% endblock %}
