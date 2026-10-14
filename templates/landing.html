@@ -23,7 +23,7 @@
     </p>
     <div class="hero-actions">
         <a href="{{ url_for('register') }}" class="hero-btn">Create free account</a>
-        <a href="#features" class="hero-btn">See how it works</a>
+        <a href="#videoModal" id="openVideoModal" class="hero-btn">See how it works</a>
     </div>
     <div class="hero-visual">
         <div class="hero-preview">
@@ -101,4 +101,94 @@
     </div>
 </section>
 
+<!-- Video Modal -->
+<div id="videoModal" class="video-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="video-modal-dialog">
+        <button type="button" class="video-modal-close" id="closeVideoModal" aria-label="Close modal">&times;</button>
+        <div class="video-wrapper">
+            <iframe id="videoIframe"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1"
+                    data-src="https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1"
+                    title="Spendly Demo Video"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    function initVideoModal() {
+        const modal = document.getElementById('videoModal');
+        const openBtn = document.getElementById('openVideoModal') ||
+            Array.from(document.querySelectorAll('a, button')).find(el => el.textContent.trim().includes('See how it works'));
+        const closeBtn = document.getElementById('closeVideoModal') || (modal && modal.querySelector('.video-modal-close'));
+        const iframe = document.getElementById('videoIframe');
+        const videoSrc = iframe ? (iframe.getAttribute('data-src') || iframe.src) : '';
+
+        function openModal(e) {
+            if (e) e.preventDefault();
+            if (iframe && videoSrc) {
+                iframe.src = videoSrc;
+            }
+            if (modal) {
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            if (modal) {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+            document.body.style.overflow = '';
+            if (iframe) {
+                try {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                } catch (err) {}
+                iframe.src = '';
+            }
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener('click', openModal);
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                const dialog = modal.querySelector('.video-modal-dialog');
+                if (dialog && !dialog.contains(e.target)) {
+                    closeModal();
+                } else if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVideoModal);
+    } else {
+        initVideoModal();
+    }
+})();
+</script>
 {% endblock %}
