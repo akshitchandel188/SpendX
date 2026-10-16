@@ -119,7 +119,7 @@ A specific testable checklist. Each item must be something that can be verified 
 
 ## Step 8 — Save the spec
 
-Save to: `.claude/specs/<step_number>-<feature_slug>.md`
+Save to: `.gemini/specs/<step_number>-<feature_slug>.md`
 
 ## Step 9 — Report to the user
 
@@ -127,10 +127,10 @@ Print a short summary in this exact format:
 
 ```
 Branch:    <branch_name>
-Spec file: .claude/specs/<step_number>-<feature_slug>.md
+Spec file: .gemini/specs/<step_number>-<feature_slug>.md
 Title:     <feature_title>
 ```
 
-Then tell the user: "Review the spec at `.claude/specs/<step_number>-<feature_slug>.md` then enter Plan Mode with Shift+Tab twice to begin implementation."
+Then tell the user: "Review the spec at `.gemini/specs/<step_number>-<feature_slug>.md` then enter Plan Mode with Shift+Tab twice to begin implementation."
 
 Do not print the full spec in chat unless explicitly asked.
