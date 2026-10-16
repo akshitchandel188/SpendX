@@ -2,7 +2,14 @@ import sqlite3
 import pytest
 from datetime import date
 from werkzeug.security import check_password_hash
-from database.db import get_db, init_db, seed_db, CATEGORIES
+from database.db import (
+    get_db,
+    init_db,
+    seed_db,
+    get_user_by_email,
+    create_user,
+    CATEGORIES,
+)
 
 
 @pytest.fixture
@@ -217,3 +224,36 @@ def test_app_startup_integration():
     client = app.test_client()
     response = client.get("/")
     assert response.status_code == 200
+
+
+def test_create_user_and_get_user_by_email(temp_db):
+    init_db(temp_db)
+    user = create_user("Test User", "test@example.com", "mypassword123", db_path=temp_db)
+    assert user is not None
+    assert user["name"] == "Test User"
+    assert user["email"] == "test@example.com"
+    assert user["password_hash"] != "mypassword123"
+    assert check_password_hash(user["password_hash"], "mypassword123")
+
+    # Lookup with get_user_by_email
+    fetched = get_user_by_email("test@example.com", db_path=temp_db)
+    assert fetched is not None
+    assert fetched["id"] == user["id"]
+    assert fetched["email"] == "test@example.com"
+
+    # Lookup with different case/spaces
+    fetched_case = get_user_by_email("  TEST@example.COM ", db_path=temp_db)
+    assert fetched_case is not None
+    assert fetched_case["id"] == user["id"]
+
+    # Non-existent user
+    assert get_user_by_email("nonexistent@example.com", db_path=temp_db) is None
+    assert get_user_by_email("", db_path=temp_db) is None
+
+
+def test_create_user_duplicate_email_raises_error(temp_db):
+    init_db(temp_db)
+    create_user("User One", "unique@example.com", "pass12345", db_path=temp_db)
+    with pytest.raises(sqlite3.IntegrityError):
+        create_user("User Two", "unique@example.com", "pass12345", db_path=temp_db)
+
