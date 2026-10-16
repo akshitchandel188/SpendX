@@ -126,3 +126,47 @@ def seed_db(db_path=None):
             )
     finally:
         conn.close()
+
+
+def get_user_by_email(email, db_path=None):
+    """
+    Look up an existing user by normalized email.
+    Returns sqlite3.Row if found, otherwise None.
+    """
+    normalized_email = email.strip().lower() if email else ""
+    if not normalized_email:
+        return None
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?;", (normalized_email,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+
+def create_user(name, email, password, db_path=None):
+    """
+    Hash password and insert a new user record using parameterized SQL.
+    Returns the newly created user as a sqlite3.Row.
+    """
+    normalized_name = name.strip()
+    normalized_email = email.strip().lower()
+    password_hash = generate_password_hash(password)
+
+    conn = get_db(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO users (name, email, password_hash)
+                VALUES (?, ?, ?);
+                """,
+                (normalized_name, normalized_email, password_hash),
+            )
+            user_id = cursor.lastrowid
+            cursor.execute("SELECT * FROM users WHERE id = ?;", (user_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
