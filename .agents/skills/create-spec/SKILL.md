@@ -54,7 +54,7 @@ Read these files before writing the spec:
 - `GEMINI.md` — roadmap, conventions, schema
 - `app.py` — existing routes and structure
 - `database/db.py` — existing schema and functions
-- All files in `.claude/specs/` — avoid duplicating existing specs
+- All files in `.gemini/specs/` — avoid duplicating existing specs
 
 Check `GEMINI.md` to confirm the requested step is not already marked complete. If it is, warn the user and stop.
 
@@ -105,7 +105,7 @@ Any new pip packages. If none: state "No new dependencies".
 
 ## Rules for implementation
 
-Specific constraints Claude must follow. Always include:
+Specific constraints Gemini must follow. Always include:
 
 - No SQLAlchemy or ORMs
 - Parameterised queries only
