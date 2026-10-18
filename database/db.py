@@ -145,6 +145,22 @@ def get_user_by_email(email, db_path=None):
         conn.close()
 
 
+def get_user_by_id(user_id, db_path=None):
+    """
+    Look up an existing user by primary key ID.
+    Returns sqlite3.Row if found, otherwise None.
+    """
+    if not user_id:
+        return None
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?;", (user_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+
 def create_user(name, email, password, db_path=None):
     """
     Hash password and insert a new user record using parameterized SQL.
