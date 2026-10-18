@@ -156,3 +156,28 @@ def test_register_duplicate_email_returns_400(test_client):
     html = second_response.get_data(as_text=True)
     assert "An account with this email already exists." in html
     assert 'value="Second User"' in html
+
+
+def test_register_already_authenticated_redirects(test_client):
+    client, _ = test_client
+    with client.session_transaction() as sess:
+        sess["user_id"] = 1
+        sess["user_name"] = "Logged In User"
+
+    # GET /register should redirect to /
+    get_res = client.get("/register")
+    assert get_res.status_code == 302
+    assert get_res.headers["Location"].endswith("/")
+
+    # POST /register should also redirect to /
+    post_res = client.post(
+        "/register",
+        data={
+            "name": "New Person",
+            "email": "new@example.com",
+            "password": "password123",
+        },
+    )
+    assert post_res.status_code == 302
+    assert post_res.headers["Location"].endswith("/")
+

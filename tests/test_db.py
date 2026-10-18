@@ -7,6 +7,7 @@ from database.db import (
     init_db,
     seed_db,
     get_user_by_email,
+    get_user_by_id,
     create_user,
     CATEGORIES,
 )
@@ -256,4 +257,25 @@ def test_create_user_duplicate_email_raises_error(temp_db):
     create_user("User One", "unique@example.com", "pass12345", db_path=temp_db)
     with pytest.raises(sqlite3.IntegrityError):
         create_user("User Two", "unique@example.com", "pass12345", db_path=temp_db)
+
+
+def test_get_user_by_id(temp_db):
+    init_db(temp_db)
+    user = create_user("Alice", "alice@example.com", "password123", db_path=temp_db)
+    user_id = user["id"]
+
+    # Found case
+    found = get_user_by_id(user_id, db_path=temp_db)
+    assert found is not None
+    assert found["id"] == user_id
+    assert found["name"] == "Alice"
+    assert found["email"] == "alice@example.com"
+
+    # Not found case
+    assert get_user_by_id(99999, db_path=temp_db) is None
+
+    # Falsy/None case
+    assert get_user_by_id(None, db_path=temp_db) is None
+    assert get_user_by_id(0, db_path=temp_db) is None
+
 
