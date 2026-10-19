@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+
+        <!-- User Identity Header Card -->
+        <div class="profile-header-card">
+            <div class="avatar-badge" aria-label="Avatar for {{ user['name'] }}">
+                {{ initials }}
+            </div>
+            <div class="profile-meta">
+                <div class="profile-header-top">
+                    <h1 class="profile-name">{{ user['name'] }}</h1>
+                    <span class="profile-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Active Member
+                    </span>
+                </div>
+                <p class="profile-email">{{ user['email'] }}</p>
+            </div>
+        </div>
+
+        <!-- Activity Summary Stats -->
+        <div class="profile-stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+                        <path d="M16 8H8"/>
+                        <path d="M16 12H8"/>
+                        <path d="M14 16H8"/>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Expenses Logged</span>
+                    <span class="stat-value">{{ stats.total_count }}</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/>
+                        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Spent</span>
+                    <span class="stat-value">₹{{ '{:,.2f}'.format(stats.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-Column Expense Breakdown: Recent Transactions & By Category -->
+        <div class="profile-dashboard-grid">
+
+            <!-- Left Card: Recent Transactions Table -->
+            <div class="profile-card recent-transactions-card">
+                <div class="card-title-row">
+                    <h2 class="section-card-title">Recent Transactions</h2>
+                </div>
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="transactions-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="th-date">DATE</th>
+                                <th scope="col" class="th-desc">DESCRIPTION</th>
+                                <th scope="col" class="th-cat">CATEGORY</th>
+                                <th scope="col" class="th-amt">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exp in recent_expenses %}
+                            <tr>
+                                <td class="td-date">{{ exp['date'] | short_date }}</td>
+                                <td class="td-desc">{{ exp['description'] or exp['category'] }}</td>
+                                <td class="td-cat">
+                                    <span class="cat-pill cat-{{ exp['category'].lower() }}">{{ exp['category'] }}</span>
+                                </td>
+                                <td class="td-amt">₹{{ '{:,.2f}'.format(exp['amount']) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p class="empty-text">No expenses logged yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Card: By Category Spending Breakdown -->
+            <div class="profile-card by-category-card">
+                <div class="card-title-row">
+                    <h2 class="section-card-title">By Category</h2>
+                </div>
+                {% if category_spending %}
+                <div class="category-breakdown-list">
+                    {% for cat in category_spending %}
+                    <div class="category-breakdown-item">
+                        <div class="cat-item-header">
+                            <span class="cat-item-name">{{ cat['category'] }}</span>
+                            <span class="cat-item-amount">₹{{ '{:,.2f}'.format(cat['total_amount']) }}</span>
+                        </div>
+                        <div class="cat-bar-track">
+                            <div class="cat-bar-fill bar-{{ cat['category'].lower() }}" style="width: {{ cat['relative_pct'] }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p class="empty-text">No category spending yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Account Details Card -->
+        <div class="profile-card profile-details-card">
+            <h2 class="section-card-title details-header">Account Details</h2>
+            <div class="details-list">
+                <div class="details-row">
+                    <span class="details-key">Full Name</span>
+                    <span class="details-val">{{ user['name'] }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">Email Address</span>
+                    <span class="details-val">{{ user['email'] }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">Member Since</span>
+                    <span class="details-val">{{ member_since }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">Account ID</span>
+                    <span class="details-val">#{{ user['id'] }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="profile-actions">
+            <a href="{{ url_for('landing') }}" class="btn-ghost">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 19-7-7 7-7"/>
+                    <path d="M19 12H5"/>
+                </svg>
+                Back to Home
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn-ghost">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" x2="9" y1="12" y2="12"/>
+                </svg>
+                Sign out
+            </a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

@@ -186,3 +186,108 @@ def create_user(name, email, password, db_path=None):
             return cursor.fetchone()
     finally:
         conn.close()
+
+
+def get_user_stats(user_id, db_path=None):
+    """
+    Query aggregate expense statistics for a user (total expense count and sum of amounts).
+    Returns a dict with 'total_count' (int) and 'total_amount' (float).
+    Handles users with zero expenses gracefully returning 0 and 0.0.
+    """
+    if not user_id:
+        return {"total_count": 0, "total_amount": 0.0}
+
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS total_count,
+                COALESCE(SUM(amount), 0.0) AS total_amount
+            FROM expenses
+            WHERE user_id = ?;
+            """,
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            return {
+                "total_count": int(row["total_count"]),
+                "total_amount": float(row["total_amount"]),
+            }
+        return {"total_count": 0, "total_amount": 0.0}
+    finally:
+        conn.close()
+
+
+def get_recent_expenses(user_id, limit=5, db_path=None):
+    """
+    Fetch the most recent expenses for a user ordered by date DESC, id DESC.
+    Returns a list of sqlite3.Row objects.
+    """
+    if not user_id:
+        return []
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, amount, category, date, description
+            FROM expenses
+            WHERE user_id = ?
+            ORDER BY date DESC, id DESC
+            LIMIT ?;
+            """,
+            (user_id, limit),
+        )
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def get_category_spending(user_id, db_path=None):
+    """
+    Query total spending grouped by category for a user, sorted descending by total amount.
+    Returns a list of dicts with category, total_amount, count, and relative_pct.
+    """
+    if not user_id:
+        return []
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                category,
+                COUNT(*) AS count,
+                COALESCE(SUM(amount), 0.0) AS total_amount
+            FROM expenses
+            WHERE user_id = ?
+            GROUP BY category
+            ORDER BY total_amount DESC;
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        if not rows:
+            return []
+
+        max_amount = max(float(r["total_amount"]) for r in rows) if rows else 0.0
+
+        result = []
+        for r in rows:
+            amt = float(r["total_amount"])
+            relative_pct = round((amt / max_amount * 100), 1) if max_amount > 0 else 0.0
+            result.append({
+                "category": r["category"],
+                "total_amount": amt,
+                "count": int(r["count"]),
+                "relative_pct": relative_pct,
+            })
+        return result
+    finally:
+        conn.close()
+
+
+

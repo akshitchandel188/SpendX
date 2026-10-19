@@ -38,7 +38,7 @@ def test_login_already_authenticated_redirects(test_client):
 
     response = client.get("/login")
     assert response.status_code == 302
-    assert response.headers["Location"].endswith("/")
+    assert response.headers["Location"].endswith("/profile")
 
 
 @pytest.mark.parametrize("payload", [
@@ -100,7 +100,7 @@ def test_login_success_sets_session_and_redirects(test_client):
         },
     )
     assert response.status_code == 302
-    assert response.headers["Location"].endswith("/")
+    assert response.headers["Location"].endswith("/profile")
 
     with client.session_transaction() as sess:
         assert sess.get("user_id") == user["id"]
@@ -119,7 +119,7 @@ def test_login_email_normalized(test_client):
         },
     )
     assert response.status_code == 302
-    assert response.headers["Location"].endswith("/")
+    assert response.headers["Location"].endswith("/profile")
 
     with client.session_transaction() as sess:
         assert sess.get("user_id") == user["id"]
