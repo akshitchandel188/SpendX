@@ -9,6 +9,9 @@ from database.db import (
     get_user_by_email,
     get_user_by_id,
     create_user,
+    get_user_stats,
+    get_recent_expenses,
+    get_category_spending,
     CATEGORIES,
 )
 
@@ -277,5 +280,153 @@ def test_get_user_by_id(temp_db):
     # Falsy/None case
     assert get_user_by_id(None, db_path=temp_db) is None
     assert get_user_by_id(0, db_path=temp_db) is None
+
+
+def test_get_user_stats_empty(temp_db):
+    init_db(temp_db)
+    user = create_user("No Expense User", "noexpense@example.com", "password123", db_path=temp_db)
+    stats = get_user_stats(user["id"], db_path=temp_db)
+    assert stats["total_count"] == 0
+    assert stats["total_amount"] == 0.0
+
+
+def test_get_user_stats_with_data(temp_db):
+    init_db(temp_db)
+    user = create_user("Spender", "spender@example.com", "password123", db_path=temp_db)
+    conn = get_db(temp_db)
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO expenses (user_id, amount, category, date, description)
+                VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);
+                """,
+                (
+                    user["id"], 250.50, "Food", "2026-10-01", "Lunch",
+                    user["id"], 100.00, "Transport", "2026-10-02", "Bus",
+                    user["id"], 749.50, "Shopping", "2026-10-03", "Clothes",
+                ),
+            )
+    finally:
+        conn.close()
+
+    stats = get_user_stats(user["id"], db_path=temp_db)
+    assert stats["total_count"] == 3
+    assert stats["total_amount"] == pytest.approx(1100.00)
+
+
+def test_get_user_stats_isolation(temp_db):
+    init_db(temp_db)
+    user1 = create_user("User One", "user1@example.com", "password123", db_path=temp_db)
+    user2 = create_user("User Two", "user2@example.com", "password123", db_path=temp_db)
+
+    conn = get_db(temp_db)
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO expenses (user_id, amount, category, date, description)
+                VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);
+                """,
+                (
+                    user1["id"], 500.00, "Bills", "2026-10-05", "User1 electricity",
+                    user2["id"], 1500.00, "Rent" if "Rent" in CATEGORIES else "Other", "2026-10-05", "User2 other",
+                ),
+            )
+    finally:
+        conn.close()
+
+    stats1 = get_user_stats(user1["id"], db_path=temp_db)
+    assert stats1["total_count"] == 1
+    assert stats1["total_amount"] == pytest.approx(500.00)
+
+    stats2 = get_user_stats(user2["id"], db_path=temp_db)
+    assert stats2["total_count"] == 1
+    assert stats2["total_amount"] == pytest.approx(1500.00)
+
+
+def test_get_user_stats_none_or_invalid_id(temp_db):
+    init_db(temp_db)
+    assert get_user_stats(None, db_path=temp_db) == {"total_count": 0, "total_amount": 0.0}
+    assert get_user_stats(0, db_path=temp_db) == {"total_count": 0, "total_amount": 0.0}
+    assert get_user_stats(99999, db_path=temp_db) == {"total_count": 0, "total_amount": 0.0}
+
+
+def test_get_recent_expenses(temp_db):
+    init_db(temp_db)
+    user = create_user("Recent Spender", "recent@example.com", "password123", db_path=temp_db)
+    conn = get_db(temp_db)
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO expenses (user_id, amount, category, date, description)
+                VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);
+                """,
+                (
+                    user["id"], 100.0, "Food", "2026-10-01", "Oldest",
+                    user["id"], 200.0, "Bills", "2026-10-02", "Middle",
+                    user["id"], 300.0, "Shopping", "2026-10-03", "Newest",
+                ),
+            )
+    finally:
+        conn.close()
+
+    # Default limit=5 returns all 3, ordered date DESC
+    recent = get_recent_expenses(user["id"], db_path=temp_db)
+    assert len(recent) == 3
+    assert recent[0]["description"] == "Newest"
+    assert recent[1]["description"] == "Middle"
+    assert recent[2]["description"] == "Oldest"
+
+    # Limit=2 returns latest 2
+    limited = get_recent_expenses(user["id"], limit=2, db_path=temp_db)
+    assert len(limited) == 2
+    assert limited[0]["description"] == "Newest"
+
+    # Invalid / None user
+    assert get_recent_expenses(None, db_path=temp_db) == []
+    assert get_recent_expenses(0, db_path=temp_db) == []
+
+
+def test_get_category_spending(temp_db):
+    init_db(temp_db)
+    user = create_user("Category Spender", "catspender@example.com", "password123", db_path=temp_db)
+    conn = get_db(temp_db)
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO expenses (user_id, amount, category, date, description)
+                VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);
+                """,
+                (
+                    user["id"], 500.0, "Food", "2026-10-01", "Lunch",
+                    user["id"], 250.0, "Food", "2026-10-02", "Dinner",
+                    user["id"], 1500.0, "Shopping", "2026-10-03", "Shoes",
+                ),
+            )
+    finally:
+        conn.close()
+
+    cat_spending = get_category_spending(user["id"], db_path=temp_db)
+    # Sorted descending: Shopping (1500) then Food (750)
+    assert len(cat_spending) == 2
+    assert cat_spending[0]["category"] == "Shopping"
+    assert cat_spending[0]["total_amount"] == 1500.0
+    assert cat_spending[0]["count"] == 1
+    assert cat_spending[0]["relative_pct"] == 100.0
+
+    assert cat_spending[1]["category"] == "Food"
+    assert cat_spending[1]["total_amount"] == 750.0
+    assert cat_spending[1]["count"] == 2
+    assert cat_spending[1]["relative_pct"] == 50.0
+
+    # User with no expenses or invalid user
+    assert get_category_spending(None, db_path=temp_db) == []
+    assert get_category_spending(99999, db_path=temp_db) == []
+
+
+
 
 

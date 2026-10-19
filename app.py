@@ -1,8 +1,19 @@
 import os
 import re
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
-from database.db import get_db, init_db, seed_db, get_user_by_email, get_user_by_id, create_user
+from database.db import (
+    get_db,
+    init_db,
+    seed_db,
+    get_user_by_email,
+    get_user_by_id,
+    create_user,
+    get_user_stats,
+    get_recent_expenses,
+    get_category_spending,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-spendly-fallback")
@@ -83,7 +94,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("user_id"):
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
@@ -106,7 +117,7 @@ def login():
 
         session["user_id"] = user["id"]
         session["user_name"] = user["name"]
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
 
     return render_template("login.html")
 
@@ -132,9 +143,63 @@ def privacy():
 # ------------------------------------------------------------------ #
 
 
+def format_member_since(raw_date):
+    if not raw_date:
+        return "N/A"
+    try:
+        dt = datetime.strptime(str(raw_date)[:19], "%Y-%m-%d %H:%M:%S")
+        return dt.strftime("%B %d, %Y")
+    except Exception:
+        try:
+            dt = datetime.strptime(str(raw_date)[:10], "%Y-%m-%d")
+            return dt.strftime("%B %d, %Y")
+        except Exception:
+            return str(raw_date)
+
+
+def format_short_date(date_str):
+    if not date_str:
+        return ""
+    try:
+        dt = datetime.strptime(str(date_str)[:10], "%Y-%m-%d")
+        return dt.strftime("%d %b %Y")
+    except Exception:
+        return str(date_str)
+
+
+@app.template_filter("short_date")
+def short_date_filter(date_str):
+    return format_short_date(date_str)
+
+
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = get_user_by_id(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for("login"))
+
+    name_parts = user["name"].strip().split()
+    initials = (name_parts[0][0] + (name_parts[-1][0] if len(name_parts) > 1 else "")).upper() if name_parts else "U"
+
+    member_since = format_member_since(user["created_at"])
+    stats = get_user_stats(user_id)
+    recent_expenses = get_recent_expenses(user_id, limit=8)
+    category_spending = get_category_spending(user_id)
+
+    return render_template(
+        "profile.html",
+        user=user,
+        initials=initials,
+        member_since=member_since,
+        stats=stats,
+        recent_expenses=recent_expenses,
+        category_spending=category_spending,
+    )
 
 
 @app.route("/expenses/add")
