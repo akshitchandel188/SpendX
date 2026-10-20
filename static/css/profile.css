@@ -164,6 +164,17 @@
     margin-bottom: 0.5rem;
 }
 
+.btn-add-expense {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1.2;
+}
+
 /* Recent Transactions Table */
 .table-responsive {
     width: 100%;

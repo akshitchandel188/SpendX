@@ -134,6 +134,7 @@
             <div class="profile-card recent-transactions-card">
                 <div class="card-title-row">
                     <h2 class="section-card-title">Recent Transactions</h2>
+                    <a href="{{ url_for('add_expense') }}" class="btn-primary btn-add-expense">+ Add Expense</a>
                 </div>
                 {% if recent_expenses %}
                 <div class="table-responsive">

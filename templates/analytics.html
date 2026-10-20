@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="analytics-page" aria-labelledby="analytics-heading">
+    <!-- Ambient Background Accents -->
+    <div class="analytics-ambient-shape ambient-top-left" aria-hidden="true"></div>
+    <div class="analytics-ambient-shape ambient-bottom-right" aria-hidden="true"></div>
+
+    <div class="coming-soon-card">
+        <!-- Decorative Corner Accents -->
+        <div class="corner-accent corner-top-right" aria-hidden="true"></div>
+        <div class="corner-accent corner-bottom-left" aria-hidden="true"></div>
+
+        <!-- Center Icon with Ambient Glow -->
+        <div class="icon-container">
+            <div class="icon-glow" aria-hidden="true"></div>
+            <div class="icon-badge">
+                <svg class="clock-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Coming Soon Pill Badge -->
+        <div class="coming-soon-pill">
+            <span>Coming Soon</span>
+        </div>
+
+        <!-- Title -->
+        <h1 id="analytics-heading" class="coming-soon-title">Advanced Analytics</h1>
+
+        <!-- Description -->
+        <p class="coming-soon-desc">
+            We're working on powerful insights and visualizations to help you understand your spending patterns better.
+        </p>
+
+        <!-- Progress Indicator -->
+        <div class="progress-indicator" aria-hidden="true">
+            <div class="pulse-dot"></div>
+            <div class="pulse-dot"></div>
+            <div class="pulse-dot"></div>
+        </div>
+        <p class="crafting-text">We're crafting something special</p>
+
+        <!-- Decorative Bottom Line -->
+        <div class="card-bottom-line" aria-hidden="true"></div>
+    </div>
+</section>
+{% endblock %}
