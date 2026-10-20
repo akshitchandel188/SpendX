@@ -1,4 +1,5 @@
 ---
+name : test-feature
 description: Writes and runs tests for a specific Spendly feature. Pass the spec name as argument e.g. /test-feature 05-backend-connection
 allowed-tools: Bash(python -m pytest)
 ---

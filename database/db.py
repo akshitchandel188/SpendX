@@ -72,6 +72,7 @@ def init_db(db_path=None):
             """)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON expenses(user_id, date);")
     finally:
         conn.close()
 

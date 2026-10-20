@@ -29,6 +29,61 @@
             </div>
         </div>
 
+        <!-- Flash Messages / Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="profile-alerts" role="alert">
+              {% for category, message in messages %}
+                <div class="profile-alert profile-alert-{{ category }}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Date Filter Bar -->
+        <div class="filter-bar-card">
+            <div class="filter-presets-group" role="group" aria-label="Quick date range filters">
+                <a href="{{ url_for('profile', date_from=presets.this_month.date_from, date_to=presets.this_month.date_to) }}"
+                   class="preset-btn {% if active_preset == 'this_month' %}active{% endif %}">
+                    This Month
+                </a>
+                <a href="{{ url_for('profile', date_from=presets.last_3_months.date_from, date_to=presets.last_3_months.date_to) }}"
+                   class="preset-btn {% if active_preset == 'last_3_months' %}active{% endif %}">
+                    Last 3 Months
+                </a>
+                <a href="{{ url_for('profile', date_from=presets.last_6_months.date_from, date_to=presets.last_6_months.date_to) }}"
+                   class="preset-btn {% if active_preset == 'last_6_months' %}active{% endif %}">
+                    Last 6 Months
+                </a>
+                <a href="{{ url_for('profile') }}"
+                   class="preset-btn {% if active_preset == 'all_time' %}active{% endif %}">
+                    All Time
+                </a>
+            </div>
+
+            <form method="GET" action="{{ url_for('profile') }}" class="filter-custom-form">
+                <div class="date-input-group">
+                    <label for="date_from" class="sr-only">From date</label>
+                    <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="filter-date-input" aria-label="From date">
+                </div>
+                <span class="date-range-sep">to</span>
+                <div class="date-input-group">
+                    <label for="date_to" class="sr-only">To date</label>
+                    <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="filter-date-input" aria-label="To date">
+                </div>
+                <button type="submit" class="filter-apply-btn {% if active_preset == 'custom' %}active{% endif %}">
+                    Apply
+                </button>
+            </form>
+        </div>
+
         <!-- Activity Summary Stats -->
         <div class="profile-stats-grid">
             <div class="stat-card">

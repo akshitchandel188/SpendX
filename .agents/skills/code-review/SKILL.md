@@ -1,4 +1,5 @@
 ---
+name: "code-review"
 description: Runs parallel security and quality code 
   review for a specific Spendly feature. Pass the spec 
   name as argument e.g. /code-review-feature 03-login
