@@ -6,9 +6,11 @@ Category breakdown query helper for Spendly.
 from database.db import get_db
 
 
-def get_category_breakdown(user_id, db_path=None):
+def get_category_breakdown(user_id, date_from=None, date_to=None, db_path=None):
     """
     Query spending grouped by category for a user, sorted descending by total amount.
+    Optionally filters by date range (inclusive: date BETWEEN date_from AND date_to)
+    when both date_from and date_to are provided.
     Returns a list of dicts:
         [
             {
@@ -31,16 +33,17 @@ def get_category_breakdown(user_id, db_path=None):
     conn = get_db(db_path)
     try:
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT category, COALESCE(SUM(amount), 0.0) AS total
-            FROM expenses
-            WHERE user_id = ?
-            GROUP BY category
-            ORDER BY total DESC, category ASC;
-            """,
-            (user_id,),
+        has_date_filter = bool(date_from and date_to)
+        date_clause = " AND date BETWEEN ? AND ?" if has_date_filter else ""
+        date_params = (date_from, date_to) if has_date_filter else ()
+
+        sql = (
+            "SELECT category, COALESCE(SUM(amount), 0.0) AS total "
+            "FROM expenses WHERE user_id = ?" + date_clause + " "
+            "GROUP BY category "
+            "ORDER BY total DESC, category ASC;"
         )
+        cursor.execute(sql, (user_id, *date_params))
         rows = cursor.fetchall()
         if not rows:
             return []

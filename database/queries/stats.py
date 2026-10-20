@@ -51,9 +51,11 @@ def get_user_by_id(user_id, db_path=None):
         conn.close()
 
 
-def get_summary_stats(user_id, db_path=None):
+def get_summary_stats(user_id, date_from=None, date_to=None, db_path=None):
     """
     Query total spending amount, transaction count, and top category for a user.
+    Optionally filters by date range (inclusive: date BETWEEN date_from AND date_to)
+    when both date_from and date_to are provided.
     Returns:
         {
             "total_spent": float,
@@ -77,15 +79,16 @@ def get_summary_stats(user_id, db_path=None):
     conn = get_db(db_path)
     try:
         cursor = conn.cursor()
+        has_date_filter = bool(date_from and date_to)
+        date_clause = " AND date BETWEEN ? AND ?" if has_date_filter else ""
+        date_params = (date_from, date_to) if has_date_filter else ()
+
         # 1. Total count & total amount
-        cursor.execute(
-            """
-            SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0.0) AS total
-            FROM expenses
-            WHERE user_id = ?;
-            """,
-            (user_id,),
+        count_sql = (
+            "SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0.0) AS total "
+            "FROM expenses WHERE user_id = ?" + date_clause + ";"
         )
+        cursor.execute(count_sql, (user_id, *date_params))
         agg = cursor.fetchone()
         count = int(agg["count"]) if agg else 0
         total = float(agg["total"]) if agg else 0.0
@@ -94,17 +97,14 @@ def get_summary_stats(user_id, db_path=None):
             return default_stats
 
         # 2. Top category by total spend
-        cursor.execute(
-            """
-            SELECT category, SUM(amount) AS cat_total
-            FROM expenses
-            WHERE user_id = ?
-            GROUP BY category
-            ORDER BY cat_total DESC, category ASC
-            LIMIT 1;
-            """,
-            (user_id,),
+        top_cat_sql = (
+            "SELECT category, SUM(amount) AS cat_total "
+            "FROM expenses WHERE user_id = ?" + date_clause + " "
+            "GROUP BY category "
+            "ORDER BY cat_total DESC, category ASC "
+            "LIMIT 1;"
         )
+        cursor.execute(top_cat_sql, (user_id, *date_params))
         top_row = cursor.fetchone()
         top_cat = top_row["category"] if top_row else "—"
 
