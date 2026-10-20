@@ -44,3 +44,31 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None, db_
         ]
     finally:
         conn.close()
+
+
+def insert_expense(user_id, amount, category, date, description=None, db_path=None):
+    """
+    Insert a new expense into the expenses table.
+    description is optional; blank or whitespace-only strings are stored as None (NULL).
+    Returns the newly inserted expense row ID.
+    """
+    if description is not None:
+        description = description.strip()
+        if not description:
+            description = None
+
+    conn = get_db(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO expenses (user_id, amount, category, date, description)
+                VALUES (?, ?, ?, ?, ?);
+                """,
+                (user_id, float(amount), category, str(date), description),
+            )
+            return cursor.lastrowid
+    finally:
+        conn.close()
+

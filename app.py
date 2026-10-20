@@ -9,12 +9,14 @@ from database.db import (
     seed_db,
     get_user_by_email,
     create_user,
+    CATEGORIES,
 )
 from database.queries import (
     get_user_by_id,
     get_summary_stats,
     get_recent_transactions,
     get_category_breakdown,
+    insert_expense,
 )
 
 app = Flask(__name__)
@@ -282,9 +284,103 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/analytics")
+def analytics():
+    """Render the analytics coming soon page for authenticated users."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = get_user_by_id(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for("login"))
+
+    return render_template("analytics.html", user=user)
+
+
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    """Add a new expense for the authenticated user."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = get_user_by_id(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for("login"))
+
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    if request.method == "POST":
+        amount_raw = request.form.get("amount", "").strip()
+        category = request.form.get("category", "").strip()
+        date_raw = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip()
+
+        error = None
+        amount = None
+
+        if not amount_raw:
+            error = "Please enter an amount."
+        else:
+            try:
+                amount = float(amount_raw)
+                if amount <= 0:
+                    error = "Amount must be greater than zero."
+            except ValueError:
+                error = "Amount must be a valid number."
+
+        if not error:
+            if not category or category not in CATEGORIES:
+                error = "Please select a valid category."
+
+        if not error:
+            if not date_raw:
+                error = "Please select a valid date."
+            else:
+                try:
+                    datetime.strptime(date_raw, "%Y-%m-%d")
+                except ValueError:
+                    error = "Date must be a valid date in YYYY-MM-DD format."
+
+        if not error and len(description) > 200:
+            error = "Description cannot exceed 200 characters."
+
+        if error:
+            return (
+                render_template(
+                    "add_expense.html",
+                    error=error,
+                    amount=amount_raw,
+                    category=category,
+                    date=date_raw or today_str,
+                    description=description,
+                    categories=CATEGORIES,
+                    today=today_str,
+                ),
+                200,
+            )
+
+        insert_expense(
+            user_id=user_id,
+            amount=amount,
+            category=category,
+            date=date_raw,
+            description=description or None,
+        )
+        return redirect(url_for("profile"))
+
+    return render_template(
+        "add_expense.html",
+        categories=CATEGORIES,
+        today=today_str,
+        date=today_str,
+        amount="",
+        category="",
+        description="",
+    )
 
 
 @app.route("/expenses/<int:id>/edit")
