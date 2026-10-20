@@ -8,11 +8,16 @@ from database.db import (
     init_db,
     seed_db,
     get_user_by_email,
-    get_user_by_id,
     create_user,
     get_user_stats,
     get_recent_expenses,
     get_category_spending,
+)
+from database.queries import (
+    get_user_by_id,
+    get_summary_stats,
+    get_recent_transactions,
+    get_category_breakdown,
 )
 
 app = Flask(__name__)
@@ -178,6 +183,7 @@ def profile():
     if not user_id:
         return redirect(url_for("login"))
 
+    # === SECTION 2: Summary Stats & User Profile (Subagent 2) ===
     user = get_user_by_id(user_id)
     if not user:
         session.clear()
@@ -186,10 +192,20 @@ def profile():
     name_parts = user["name"].strip().split()
     initials = (name_parts[0][0] + (name_parts[-1][0] if len(name_parts) > 1 else "")).upper() if name_parts else "U"
 
-    member_since = format_member_since(user["created_at"])
-    stats = get_user_stats(user_id)
-    recent_expenses = get_recent_expenses(user_id, limit=8)
-    category_spending = get_category_spending(user_id)
+    member_since = user.get("member_since") or format_member_since(user.get("created_at"))
+    stats = get_summary_stats(user_id)
+    summary_stats = stats
+    # === END SECTION 2 ===
+
+    # === SECTION 1: Transaction History (Subagent 1) ===
+    recent_transactions = get_recent_transactions(user_id, limit=10)
+    recent_expenses = recent_transactions
+    # === END SECTION 1 ===
+
+    # === SECTION 3: Category Breakdown (Subagent 3) ===
+    category_breakdown = get_category_breakdown(user_id)
+    category_spending = category_breakdown
+    # === END SECTION 3 ===
 
     return render_template(
         "profile.html",
@@ -197,8 +213,11 @@ def profile():
         initials=initials,
         member_since=member_since,
         stats=stats,
+        summary_stats=summary_stats,
         recent_expenses=recent_expenses,
+        recent_transactions=recent_transactions,
         category_spending=category_spending,
+        category_breakdown=category_breakdown,
     )
 
 
