@@ -211,8 +211,35 @@
 .th-amt,
 .td-amt {
     text-align: right;
-    padding-right: 0 !important;
     font-variant-numeric: tabular-nums;
+}
+
+.th-actions,
+.td-actions {
+    text-align: right;
+    padding-right: 0 !important;
+    white-space: nowrap;
+}
+
+.btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-action-edit:hover {
+    background: var(--accent);
+    color: var(--paper-card);
+    border-color: var(--accent);
 }
 
 .td-amt {

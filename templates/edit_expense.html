@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Expense — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_expense.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="expense-section">
+    <div class="expense-container">
+
+        <div class="expense-header">
+            <h1 class="expense-title">Edit Expense</h1>
+            <p class="expense-subtitle">Update your transaction details</p>
+        </div>
+
+        <div class="expense-card">
+            {% if error %}
+            <div class="auth-error" role="alert">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('edit_expense', id=expense.id) }}">
+                <div class="form-group">
+                    <label for="amount">Amount (₹) *</label>
+                    <div class="amount-input-wrapper">
+                        <span class="currency-symbol" aria-hidden="true">₹</span>
+                        <input type="number" id="amount" name="amount"
+                               class="form-input amount-input" placeholder="0.00"
+                               step="0.01" min="0.01"
+                               value="{{ amount if amount is not none else expense.amount }}"
+                               required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <div class="select-wrapper">
+                        <select id="category" name="category" class="form-select" required>
+                            <option value="" disabled>Select a category</option>
+                            {% set active_category = category if category is not none else expense.category %}
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {% if active_category == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Date *</label>
+                    <input type="date" id="date" name="date"
+                           class="form-input"
+                           value="{{ date or expense.date }}"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <input type="text" id="description" name="description"
+                           class="form-input" placeholder="e.g. Grocery run, train ticket"
+                           maxlength="200"
+                           value="{{ description if description is not none else (expense.description or '') }}">
+                    <span class="char-counter">Max 200 characters</span>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ url_for('profile') }}" class="btn-cancel-expense">Cancel</a>
+                    <button type="submit" class="btn-save-expense">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

@@ -72,3 +72,74 @@ def insert_expense(user_id, amount, category, date, description=None, db_path=No
     finally:
         conn.close()
 
+
+def get_expense_by_id(expense_id, user_id=None, db_path=None):
+    """
+    Fetch a single expense by ID, optionally verifying ownership by user_id.
+    Returns a dict of expense fields or None if not found.
+    """
+    if not expense_id:
+        return None
+
+    conn = get_db(db_path)
+    try:
+        cursor = conn.cursor()
+        if user_id is not None:
+            cursor.execute(
+                "SELECT id, user_id, amount, category, date, description, created_at "
+                "FROM expenses WHERE id = ? AND user_id = ?;",
+                (expense_id, user_id),
+            )
+        else:
+            cursor.execute(
+                "SELECT id, user_id, amount, category, date, description, created_at "
+                "FROM expenses WHERE id = ?;",
+                (expense_id,),
+            )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "id": row["id"],
+            "user_id": row["user_id"],
+            "amount": float(row["amount"]),
+            "category": row["category"],
+            "date": row["date"],
+            "description": row["description"] or "",
+            "created_at": row["created_at"],
+        }
+    finally:
+        conn.close()
+
+
+def update_expense(expense_id, user_id, amount, category, date, description=None, db_path=None):
+    """
+    Update an existing expense record matching expense_id and user_id.
+    description is optional; blank or whitespace-only strings are stored as None (NULL).
+    Returns True if a row was updated, False otherwise.
+    """
+    if not expense_id or not user_id:
+        return False
+
+    if description is not None:
+        description = description.strip()
+        if not description:
+            description = None
+
+    conn = get_db(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE expenses
+                SET amount = ?, category = ?, date = ?, description = ?
+                WHERE id = ? AND user_id = ?;
+                """,
+                (float(amount), category, str(date), description, expense_id, user_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
